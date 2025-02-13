@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minestom Tools - Anvil to Polar Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .instructions {
+            background-color: #e9f7ff;
+            border: 1px solid #b3e5fc;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .upload-form {
+            text-align: center;
+        }
+        .upload-form input[type="file"] {
+            display: none;
+        }
+        .upload-form label {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .upload-form label:hover {
+            background-color: #45a049;
+        }
+        .upload-form button {
+            background-color: #008CBA;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .upload-form button:hover {
+            background-color: #007B9A;
+        }
+        #file-name {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Minestom Tools - Anvil to Polar Converter</h1>
+        
+        <div class="instructions">
+            <h2>Instructions:</h2>
+            <ol>
+                <li>Find your world folder.</li>
+                <li>Create a zip file containing the entire world folder.</li>
+                <li>Upload the zip file using the button below.</li>
+                <li>Wait for the conversion process to complete.</li>
+                <li>Download the converted Polar format world.</li>
+            </ol>
+            <h2>In Case of Error:</h2>
+            <ol>
+                <li>Open minecraft.</li>
+                <li>Put the unzipped world folder into your .minecraft/saves folder.</li>
+                <li>Open single player.</li>
+                <li>Click on the world and then click edit and "Optimize World"</li>
+                <li>Redo the instructions.</li>
+            </ol>
+        </div>
+        
+        <form class="upload-form" id="upload-form">
+            <label for="file-upload">Choose Zip File</label>
+            <input type="file" id="file-upload" accept=".zip" onchange="updateFileName()">
+            <div id="file-name"></div>
+            <button type="submit">Upload and Convert</button>
+        </form>
+    </div>
+
+    <script>
+        function updateFileName() {
+            const fileInput = document.getElementById('file-upload');
+            const fileNameDisplay = document.getElementById('file-name');
+            if (fileInput.files.length > 0) {
+                fileNameDisplay.textContent = `Selected file: ${fileInput.files[0].name}`;
+            } else {
+                fileNameDisplay.textContent = '';
+            }
+        }
+
+        document.getElementById('upload-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('file-upload');
+            if (fileInput.files.length === 0) {
+                alert('Please select a zip file to upload.');
+                return;
+            }
+
+            const button = this.querySelector('button');
+            const originalText = button.textContent;
+            button.textContent = 'Converting...';
+            button.disabled = true;
+
+            fetch('https://api.minestom.tools/convert', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/octet-stream',
+                    'Content-Type': 'application/octet-stream',
+                },
+                body: fileInput.files[0] 
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = 'world.polar';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+                fileInput.value = '';
+                document.getElementById('file-name').textContent = '';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred during the conversion process. Please try again.');
+            })
+            .finally(() => {
+                button.textContent = originalText;
+                button.disabled = false;
+            });
+        });
+    </script>
+</body>
+</html>
