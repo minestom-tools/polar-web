@@ -63,6 +63,20 @@
         #file-name {
             margin-bottom: 10px;
         }
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input[type="number"] {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
     </style>
 </head>
 <body>
@@ -75,16 +89,9 @@
                 <li>Find your world folder.</li>
                 <li>Create a zip file containing the entire world folder.</li>
                 <li>Upload the zip file using the button below.</li>
+                <li>Set the conversion parameters (optional).</li>
                 <li>Wait for the conversion process to complete.</li>
                 <li>Download the converted Polar format world.</li>
-            </ol>
-            <h2>In Case of Error:</h2>
-            <ol>
-                <li>Open minecraft.</li>
-                <li>Put the unzipped world folder into your .minecraft/saves folder.</li>
-                <li>Open single player.</li>
-                <li>Click on the world and then click edit and "Optimize World"</li>
-                <li>Redo the instructions.</li>
             </ol>
         </div>
         
@@ -92,6 +99,32 @@
             <label for="file-upload">Choose Zip File</label>
             <input type="file" id="file-upload" accept=".zip" onchange="updateFileName()">
             <div id="file-name"></div>
+            
+            <div class="form-group">
+                <label for="min">Min Section:</label>
+                <input type="number" id="min" name="min">
+            </div>
+            
+            <div class="form-group">
+                <label for="max">Max Section:</label>
+                <input type="number" id="max" name="max">
+            </div>
+            
+            <div class="form-group">
+                <label for="center-x">Center X:</label>
+                <input type="number" id="center-x" name="center-x" value="0">
+            </div>
+            
+            <div class="form-group">
+                <label for="center-z">Center Z:</label>
+                <input type="number" id="center-z" name="center-z" value="0">
+            </div>
+            
+            <div class="form-group">
+                <label for="radius">Chunk Radius:</label>
+                <input type="number" id="radius" name="radius">
+            </div>
+            
             <button type="submit">Upload and Convert</button>
         </form>
     </div>
@@ -110,30 +143,27 @@
         document.getElementById('upload-form').addEventListener('submit', function(e) {
             e.preventDefault();
             const fileInput = document.getElementById('file-upload');
-            if (fileInput.files.length === 0) {
-                alert('Please select a zip file to upload.');
-                return;
-            }
-
+            
             const button = this.querySelector('button');
             const originalText = button.textContent;
             button.textContent = 'Converting...';
             button.disabled = true;
 
-            fetch('https://api.minestom.tools/convert', {
+            const formData = new FormData();
+            if (fileInput.files.length > 0) {
+                formData.append('file', fileInput.files[0]);
+            }
+            formData.append('min', document.getElementById('min').value);
+            formData.append('max', document.getElementById('max').value);
+            formData.append('center-x', document.getElementById('center-x').value);
+            formData.append('center-z', document.getElementById('center-z').value);
+            formData.append('radius', document.getElementById('radius').value);
+
+            fetch('http://localhost:8080/convert', {
                 method: 'POST',
-                headers: {
-                    'Accept': 'application/octet-stream',
-                    'Content-Type': 'application/octet-stream',
-                },
-                body: fileInput.files[0] 
+                body: formData
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.blob();
-            })
+            .then(response => response.blob())
             .then(blob => {
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -144,9 +174,6 @@
                 a.click();
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);
-                
-                fileInput.value = '';
-                document.getElementById('file-name').textContent = '';
             })
             .catch(error => {
                 console.error('Error:', error);
