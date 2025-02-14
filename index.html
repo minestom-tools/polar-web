@@ -173,7 +173,7 @@
             formData.append('center-z', document.getElementById('center-z').value);
             formData.append('radius', document.getElementById('radius').value);
 
-            fetch('http://localhost:8080/convert', {
+            fetch('https://api.minestom.tools/convert', {
                 method: 'POST',
                 body: formData
             })
