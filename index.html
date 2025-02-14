@@ -60,7 +60,7 @@
         .upload-form button:hover {
             background-color: #007B9A;
         }
-        #file-name {
+        #file-name, #extra-file-name {
             margin-bottom: 10px;
         }
         .form-group {
@@ -89,6 +89,7 @@
                 <li>Find your world folder.</li>
                 <li>Create a zip file containing the entire world folder.</li>
                 <li>Upload the zip file using the button below.</li>
+                <li>Upload an extra data file if needed (optional).</li>
                 <li>Set the conversion parameters (optional).</li>
                 <li>Wait for the conversion process to complete.</li>
                 <li>Download the converted Polar format world.</li>
@@ -97,9 +98,13 @@
         
         <form class="upload-form" id="upload-form">
             <label for="file-upload">Choose Zip File</label>
-            <input type="file" id="file-upload" accept=".zip" onchange="updateFileName()">
+            <input type="file" id="file-upload" accept=".zip" onchange="updateFileName('file-upload', 'file-name')">
             <div id="file-name"></div>
             
+            <label for="extra-file-upload">Choose Extra Data File (Optional)</label>
+            <input type="file" id="extra-file-upload" onchange="updateFileName('extra-file-upload', 'extra-file-name')">
+            <div id="extra-file-name"></div>
+
             <div class="form-group">
                 <label for="min">Min Section:</label>
                 <input type="number" id="min" name="min">
@@ -130,9 +135,9 @@
     </div>
 
     <script>
-        function updateFileName() {
-            const fileInput = document.getElementById('file-upload');
-            const fileNameDisplay = document.getElementById('file-name');
+        function updateFileName(inputId, displayId) {
+            const fileInput = document.getElementById(inputId);
+            const fileNameDisplay = document.getElementById(displayId);
             if (fileInput.files.length > 0) {
                 fileNameDisplay.textContent = `Selected file: ${fileInput.files[0].name}`;
             } else {
@@ -143,7 +148,13 @@
         document.getElementById('upload-form').addEventListener('submit', function(e) {
             e.preventDefault();
             const fileInput = document.getElementById('file-upload');
-            
+            const extraFileInput = document.getElementById('extra-file-upload');
+
+            if (fileInput.files.length === 0) {
+                alert('Please select a zip file to upload.');
+                return;
+            }
+
             const button = this.querySelector('button');
             const originalText = button.textContent;
             button.textContent = 'Converting...';
@@ -152,6 +163,9 @@
             const formData = new FormData();
             if (fileInput.files.length > 0) {
                 formData.append('file', fileInput.files[0]);
+            }
+            if (extraFileInput.files.length > 0) {
+                formData.append('extra-data', extraFileInput.files[0]);
             }
             formData.append('min', document.getElementById('min').value);
             formData.append('max', document.getElementById('max').value);
